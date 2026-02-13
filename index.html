@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>For Ella ❤️</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  color: #fff;
+  background: linear-gradient(135deg, #1a0010, #3a0022, #5a0033);
+  overflow: hidden;
+  text-align: center;
+}
+
+/* Soft drifting glow */
+body::before {
+  content: "";
+  position: fixed;
+  inset: -20%;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255,120,200,0.12), transparent 45%),
+    radial-gradient(circle at 70% 60%, rgba(255,180,220,0.12), transparent 50%);
+  animation: bgDrift 80s linear infinite;
+  z-index: 0;
+}
+@keyframes bgDrift {
+  from { transform: translate(0,0); }
+  to { transform: translate(3%, -3%); }
+}
+
+/* Camera */
+.camera {
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 18s cubic-bezier(.2,.8,.2,1);
+  position: relative;
+  z-index: 1;
+}
+.camera.zoom { transform: scale(1.03); }
+
+/* Vignette */
+.vignette {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(0,0,0,0) 72%, rgba(0,0,0,0.35) 100%);
+  opacity: 0;
+  transition: opacity 10s ease;
+  z-index: 5;
+}
+.vignette.show { opacity: 1; }
+
+/* Card */
+.card {
+  width: min(520px, 92vw);
+  min-height: 70svh;
+  padding: 26px 26px 40px;
+  background: rgba(0,0,0,0.35);
+  border-radius: 28px;
+  box-shadow: 0 0 24px rgba(255,140,200,0.35);
+  animation: fadeIn .8s, breatheGlow 12s ease-in-out infinite;
+  backdrop-filter: blur(6px);
+}
+
+.card.final-glow {
+  animation: finalGlow 7s ease-in-out infinite;
+}
+
+@keyframes finalGlow {
+  0% { box-shadow: 0 0 18px rgba(255,120,200,0.4); }
+  50% { box-shadow: 0 0 60px rgba(255,160,220,0.9); }
+  100% { box-shadow: 0 0 18px rgba(255,120,200,0.4); }
+}
+
+@keyframes fadeIn {
+  from { opacity:0; transform: scale(.96) translateY(10px); }
+  to { opacity:1; transform: scale(1) translateY(0); }
+}
+@keyframes breatheGlow {
+  0% { box-shadow: 0 0 12px rgba(255,120,200,0.25); }
+  50% { box-shadow: 0 0 36px rgba(255,120,200,0.55); }
+  100% { box-shadow: 0 0 12px rgba(255,120,200,0.25); }
+}
+
+/* Progress */
+.progress {
+  height: 8px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 12px 0 20px;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, hotpink, #ff9acb);
+  transform-origin: left center;
+  transform: scaleX(0);
+  transition: transform 1.2s cubic-bezier(.16,1,.3,1);
+  border-radius: 999px;
+}
+
+/* Buttons */
+.btn {
+  display: block;
+  margin: 12px auto;
+  padding: 13px 22px;
+  width: 100%;
+  max-width: 380px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ff2f7a, #ff6fa5);
+  color: white;
+  font-size: 1em;
+  cursor: pointer;
+  transition: transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s;
+  box-shadow: 0 6px 20px rgba(255,80,150,0.25);
+}
+.btn:active { transform: scale(0.96); }
+
+/* Falling items */
+.fall {
+  position: fixed;
+  top: -10vh;
+  animation: fallDown linear forwards;
+  pointer-events: none;
+  will-change: transform;
+  z-index: 0;
+}
+
+@keyframes fallDown {
+  from { transform: translateY(-10vh) translateX(0) rotate(0deg); }
+  to { transform: translateY(110vh) translateX(var(--drift)) rotate(360deg); }
+}
+
+.heart, .rose, .ribbon {
+  font-size: 38px;
+}
+
+.kitty {
+  width: 68px;
+  filter: drop-shadow(0 0 8px rgba(255,150,200,0.6));
+}
+
+/* Bubble */
+.bubble {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.7);
+  padding: 12px 18px;
+  border-radius: 999px;
+  box-shadow: 0 0 12px rgba(255,120,200,0.5);
+  z-index: 20;
+}
+
+/* End screen */
+.end-screen {
+  max-height: 75svh;
+  overflow-y: auto;
+  padding-bottom: 24px;
+}
+</style>
+</head>
+<body>
+
+<audio id="bgMusic" src="Yume Utsutsu.mp3" loop></audio>
+<audio id="yaySound" src="Yay Sound Effect - Premium Pro.mp3"></audio>
+<audio id="sadSound" src="Annoying sad failing sound.mp3"></audio>
+
+<div class="vignette" id="vignette"></div>
+<div class="camera" id="camera">
+  <div class="card" id="app">
+    <h1>💖</h1>
+    <p id="question"></p>
+    <div class="progress"><div class="progress-fill" id="progress"></div></div>
+    <div id="answers"></div>
+  </div>
+</div>
+
+<script>
+const bgMusic = document.getElementById("bgMusic");
+const yaySound = document.getElementById("yaySound");
+const sadSound = document.getElementById("sadSound");
+
+bgMusic.volume = 0.012;
+yaySound.volume = 0.035;
+sadSound.volume = 0.035;
+
+document.body.addEventListener("click", () => {
+  bgMusic.play().catch(()=>{});
+}, { once:true });
+
+const app = document.getElementById("app");
+const camera = document.getElementById("camera");
+const vignette = document.getElementById("vignette");
+const progressFill = document.getElementById("progress");
+
+const kittyImages = [
+  "15378c76a886e306948ea87acb4575a6_transparent_smooth.png",
+  "c4c35e5ff99f705b77e186a0bd371a48_transparent_smooth.png",
+  "dd7d449ad3894de1c83f9f187869d1ea_transparent_smooth.png",
+  "2497c86a38dbd574078bccb3deaa275a_transparent_smooth.png"
+];
+
+// caps for performance
+function cap(selector, max) {
+  const els = document.querySelectorAll(selector);
+  if (els.length > max) {
+    for (let i = 0; i < els.length - max; i++) els[i].remove();
+  }
+}
+
+function spawnEmoji(char, className, capCount) {
+  cap("." + className, capCount);
+  const el = document.createElement("div");
+  el.className = className + " fall";
+  el.innerText = char;
+  el.style.left = Math.random()*100 + "vw";
+  el.style.fontSize = (30 + Math.random()*20) + "px";
+  el.style.animationDuration = (16 + Math.random()*8) + "s";
+  el.style.setProperty("--drift", (Math.random()*100 - 50) + "px");
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(), 26000);
+}
+
+function spawnKitty() {
+  cap(".kitty", 20);
+  const img = document.createElement("img");
+  img.className = "kitty fall";
+  img.src = kittyImages[Math.floor(Math.random()*kittyImages.length)];
+  img.style.left = Math.random()*100 + "vw";
+  img.style.width = (60 + Math.random()*20) + "px";
+  img.style.animationDuration = (16 + Math.random()*8) + "s";
+  img.style.setProperty("--drift", (Math.random()*100 - 50) + "px");
+  document.body.appendChild(img);
+  setTimeout(()=>img.remove(), 26000);
+}
+
+// smooth spawn loop
+let last = 0;
+function loop(t){
+  if (t - last > 900) {
+    spawnEmoji("❤️", "heart", 40);
+    if (Math.random() < 0.6) spawnEmoji("🌹", "rose", 28);
+    if (Math.random() < 0.6) spawnEmoji("🎀", "ribbon", 28);
+    if (Math.random() < 0.4) spawnKitty();
+    last = t;
+  }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* QUIZ DATA */
+const quiz = [
+  { q:"Hey Ella, would you like to be my first Valentine? 💘", a:[
+    {t:"Yes 💖",correct:true,msg:"YAY!! That makes me the happiest person alive 💕"},
+    {t:"No 😢",correct:false,msg:"NO YOU WANT TO BE MY VALENTINE BABY TRUST :D",dodge:true}
+  ]},
+
+  { q:"Why do I love YOUR eyes and not other people's?", a:[
+    {t:"Because I lost myself in them",correct:true,msg:"Yes… I really did. Every single time I look at you 💘"},
+    {t:"Because they are sparkling like stars ✨",correct:false,msg:"They really do sparkle like stars… but that’s not the reason I fell so hard for you 💫"}
+  ]},
+
+  { q:"What do I love the most?", a:[
+    {t:"Your eyes",correct:false,msg:"I adore them… but it’s even more than that 💖"},
+    {t:"Your voice",correct:false,msg:"I love hearing you… but my love goes deeper than that 💕"},
+    {t:"Your loving nature",correct:false,msg:"So close… but there’s something even bigger 😘"},
+    {t:"Everything about you",correct:true,msg:"Exactly. Every little thing about you means the world to me 💞"}
+  ]},
+
+  { q:"How much do I love you?", a:[
+    {t:"A lot",correct:false,msg:"A lot? No… it’s way more than that, baby ❤️"},
+    {t:"More than anything",correct:false,msg:"Closer… but my love still goes even further than that 😘"},
+    {t:"To infinity and beyond",correct:true,msg:"Yes. Endless. Limitless. Always you 💫"},
+    {t:"Kinda",correct:false,msg:"Kinda?! Nah… it’s everything, and you know it 😏❤️"}
+  ]},
+
+  { q:"Would I choose you in another lifetime?", a:[
+    {t:"Probably",correct:false,msg:"Probably? I’d choose you without hesitation, every time 💖"},
+    {t:"Always and forever",correct:true,msg:"Always. In every lifetime. Without a doubt 💍💘"},
+    {t:"Maybe",correct:false,msg:"There’s no maybe about it… it’s always you 💕"},
+    {t:"Need to think about it",correct:false,msg:"I don’t need to think… my heart already knows 💖"}
+  ]},
+
+  { q:"What are you to me?", a:[
+    {t:"My best friend",correct:false,msg:"You’re more than that… you’re my person 💕"},
+    {t:"My girlfriend",correct:false,msg:"Yes… but also so much more 💖"},
+    {t:"My whole world",correct:true,msg:"That’s the truth. You are my whole world 💖"},
+    {t:"My Valentine",correct:false,msg:"You are my Valentine… and so much more 💘"}
+  ]}
+];
+
+let step = 0;
+
+function render(){
+  const q = quiz[step];
+  progressFill.style.transform = "scaleX(" + (step / quiz.length) + ")";
+  document.getElementById("question").innerText = q.q;
+
+  const answers = document.getElementById("answers");
+  answers.innerHTML = "";
+
+  q.a.forEach(ans => {
+    const b = document.createElement("button");
+    b.className = "btn";
+    b.innerText = ans.t;
+
+    if (ans.dodge) {
+      b.addEventListener("mousemove", () => {
+        const x = Math.random()*240 - 120;
+        const y = Math.random()*120 - 60;
+        b.style.transform = `translate(${x}px, ${y}px)`;
+      });
+    }
+
+    b.onclick = () => {
+      showBubble(ans.msg);
+      if (!ans.correct) {
+        sadSound.currentTime = 0; sadSound.play();
+        return;
+      }
+      yaySound.currentTime = 0; yaySound.play();
+      step++;
+      if (step >= quiz.length) showEnd();
+      else render();
+    };
+
+    answers.appendChild(b);
+  });
+}
+
+function showBubble(text){
+  const b = document.createElement("div");
+  b.className = "bubble";
+  b.innerText = text;
+  document.body.appendChild(b);
+  setTimeout(()=>b.remove(), 2400);
+}
+
+function showEnd(){
+  camera.classList.add("zoom");
+  vignette.classList.add("show");
+  app.classList.add("final-glow");
+
+  const endText = `YIPPEEE SWEETHEART!!! 💖
+
+Ella, we’ve had our ups and downs, and things haven’t always been easy between us. But I’m truly grateful that I’ve been given one more chance with you. This time feels different. This time, I don’t want something temporary — I want something real, something that lasts, something that feels like forever with you.
+
+This Valentine’s Day isn’t just about today for me — it’s about all the days I hope we’ll share, all the memories we’ll create, and all the little moments that will become ours. I don’t know exactly what the future looks like… but I know I want to face it with you by my side.
+
+Thank you for being you. Thank you for being here. And thank you for being my Valentine 💘
+
+Forever yours,  
+Lucas <3`;
+
+  app.innerHTML = `
+    <div class="end-screen">
+      <p style="white-space:pre-line;line-height:1.6">${endText}</p>
+      <button class="btn" onclick="location.reload()">Replay 🔁</button>
+    </div>
+  `;
+}
+
+render();
+</script>
+</body>
+</html>
